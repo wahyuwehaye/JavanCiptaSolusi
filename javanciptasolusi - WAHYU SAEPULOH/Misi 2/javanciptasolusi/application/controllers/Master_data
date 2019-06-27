@@ -1,0 +1,85 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Master_data extends CI_Controller {
+
+	/**
+	 * Index Page for this controller.
+	 *
+	 * Maps to the following URL
+	 * 		http://example.com/index.php/welcome
+	 *	- or -
+	 * 		http://example.com/index.php/welcome/index
+	 *	- or -
+	 * Since this controller is set as the default controller in
+	 * config/routes.php, it's displayed at http://example.com/
+	 *
+	 * So any other public methods not prefixed with an underscore will
+	 * map to /index.php/welcome/<method_name>
+	 * @see https://codeigniter.com/user_guide/general/urls.html
+	 */
+
+	public function __construct(){
+	    parent::__construct();
+	    $this->load->library('session');
+	    $this->load->model('M_master','master');
+    }
+
+	public function index() {
+		$this->load->helper('url');
+		$this->load->view('tampil_data');
+	}
+
+	public function master_data() {
+		$list = $this->master->get_datatables();
+		$data = array();
+		$no = $_POST['start'];
+		foreach ($list as $master) {
+			$no++;
+			$row = array();
+			$row[] = $no;
+			$row[] = $master->lokasi_kerja_nama;
+
+			$row[] = '<a class="btn btn-sm btn-primary" href="javascript:void(0)" title="Edit" onclick="edit_master('."'".$master->id."'".')"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
+				  <a class="btn btn-sm btn-danger" href="javascript:void(0)" title="Hapus" onclick="delete_master('."'".$master->id."'".')"><i class="glyphicon glyphicon-trash"></i> Delete</a>';
+		
+			$data[] = $row;
+		}
+
+		$output = array(
+						"draw" => $_POST['draw'],
+						"recordsTotal" => $this->master->count_all(),
+						"recordsFiltered" => $this->master->count_filtered(),
+						"data" => $data,
+				);
+
+		echo json_encode($output);
+	}
+
+	public function master_edit($id) {
+		$data = $this->master->get_by_id($id);
+		echo json_encode($data);
+	}
+
+	public function master_add() {
+		$data = array(
+				'lokasi_kerja_nama' => $this->input->post('lokasi_kerja_nama'),
+			);
+		$insert = $this->master->save($data);
+		echo json_encode(array("status" => TRUE));
+	}
+
+	public function master_update() {
+		$data = array(
+				'lokasi_kerja_nama' => $this->input->post('lokasi_kerja_nama'),
+			);
+		$this->master->update(array('id' => $this->input->post('id')), $data);
+		echo json_encode(array("status" => TRUE));
+	}
+
+	public function ajax_delete($id) {
+		$this->master->delete_by_id($id);
+		echo json_encode(array("status" => TRUE));
+	}
+	
+}
